@@ -27,24 +27,24 @@ exports.getEpisodesByMediaId = (req, res) => expressAsyncHandler(async (req, res
 
         console.log("Cache MISS for key:", key);
 
-        await fetch(CONSUMET_MEDIA_EPISODES_URI)
-            .then(response => response.json())
-            .then(data => {
-                results = data.episodes || [];
-                if (results.length === 0) {
-                    return res.status(404).json({ message: "No episodes found", results: results });
-                }
-            })
-            .catch(err => {
-                console.error("Error fetching data from Zoro API:", err);
-                return res.status(500).json({ error: "Internal Server Error" });
+        try {
+            const response = await fetch(CONSUMET_MEDIA_EPISODES_URI);
+            const data = await response.json();
+            results = data.episodes || [];
+
+            if (results.length === 0) {
+                return res.status(404).json({ message: "No episodes found", results: results });
+            }
+
+            await setRedisKey({ redisClient, key, data: results });
+
+            return res.status(200).json({
+                message: `Results for: ${mediaId.toUpperCase()}`, results: results
             });
-
-        await setRedisKey({ redisClient, key, data: results });
-
-        return res.status(200).json({
-            message: `Results for: ${mediaId.toUpperCase()}`, results: results
-        });
+        } catch (err) {
+            console.error("Error fetching data from Zoro API:", err);
+            return res.status(500).json({ error: "Internal Server Error" });
+        }
 
     }
     catch (err) {
@@ -80,27 +80,27 @@ exports.getEpisodeUrl = (req, res) => expressAsyncHandler(async (req, res) => {
 
         console.log("Cache MISS for key:", key);
 
-        await fetch(CONSUMET_MEDIA_EPISODE_URI)
-            .then(response => response.json())
-            .then(data => {
-                results = data || [];
-                if (data.message.status == 404) {
-                    return res.status(404).json({ message: "No episode found", results: results });
-                }
-                if (results.length === 0) {
-                    return res.status(404).json({ message: "No episode found", results: results });
-                }
-            })
-            .catch(err => {
-                console.error("Error fetching data from Zoro API:", err);
-                return res.status(500).json({ error: "Internal Server Error" });
+        try {
+            const response = await fetch(CONSUMET_MEDIA_EPISODE_URI);
+            const data = await response.json();
+            results = data || [];
+
+            if (data.message && data.message.status == 404) {
+                return res.status(404).json({ message: "No episode found", results: results });
+            }
+            if (results.length === 0) {
+                return res.status(404).json({ message: "No episode found", results: results });
+            }
+
+            await setRedisKey({ redisClient, key, data: results });
+
+            return res.status(200).json({
+                message: `Results for: ${episodeId.toUpperCase()}`, results: results
             });
-
-        await setRedisKey({ redisClient, key, data: results });
-
-        return res.status(200).json({
-            message: `Results for: ${episodeId.toUpperCase()}`, results: results
-        });
+        } catch (err) {
+            console.error("Error fetching data from Zoro API:", err);
+            return res.status(500).json({ error: "Internal Server Error" });
+        }
 
     }
     catch (err) {
