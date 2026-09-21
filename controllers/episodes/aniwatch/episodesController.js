@@ -31,24 +31,24 @@ exports.getEpisodesByMediaId = (req, res) => expressAsyncHandler(async (req, res
 
         console.log("Cache MISS for key:", key);
 
-        await fetch(ANIWATCH_SEARCH_URI)
-            .then(response => response.json())
-            .then(data => {
-                results = data.data.episodes || [];
-                if (results.length === 0) {
-                    return res.status(404).json({ message: "No results found", results: results });
-                }
-            })
-            .catch(err => {
-                console.error("Error fetching data from Aniwatch API:", err);
-                return res.status(500).json({ error: "Internal Server Error" });
+        try {
+            const response = await fetch(ANIWATCH_SEARCH_URI);
+            const data = await response.json();
+            results = data.data.episodes || [];
+
+            if (results.length === 0) {
+                return res.status(404).json({ message: "No results found", results: results });
+            }
+
+            await setRedisKey({ redisClient, key, data: results });
+
+            return res.status(200).json({
+                message: `Results for: ${mediaId.toUpperCase()}`, results: results
             });
-
-        await setRedisKey({ redisClient, key, data: results });
-
-        return res.status(200).json({
-            message: `Results for: ${mediaId.toUpperCase()}`, results: results
-        });
+        } catch (err) {
+            console.error("Error fetching data from Aniwatch API:", err);
+            return res.status(500).json({ error: "Internal Server Error" });
+        }
 
     }
     catch (err) {
@@ -90,24 +90,24 @@ exports.getEpisodeUrl = (req, res) => expressAsyncHandler(async (req, res) => {
 
         console.log("Cache MISS for key:", key);
 
-        await fetch(ANIWATCH_SEARCH_URI)
-            .then(response => response.json())
-            .then(data => {
-                results = data.data || [];
-                if (results.length === 0) {
-                    return res.status(404).json({ message: "No results found", results: results });
-                }
-            })
-            .catch(err => {
-                console.error("Error fetching data from Aniwatch API:", err);
-                return res.status(500).json({ error: "Internal Server Error" });
+        try {
+            const response = await fetch(ANIWATCH_SEARCH_URI);
+            const data = await response.json();
+            results = data.data || [];
+
+            if (results.length === 0) {
+                return res.status(404).json({ message: "No results found", results: results });
+            }
+
+            await setRedisKey({ redisClient, key, data: results });
+
+            return res.status(200).json({
+                message: `Results for: ${episodeId.toUpperCase()}`, results: results
             });
-
-        await setRedisKey({ redisClient, key, data: results });
-
-        return res.status(200).json({
-            message: `Results for: ${episodeId.toUpperCase()}`, results: results
-        });
+        } catch (err) {
+            console.error("Error fetching data from Aniwatch API:", err);
+            return res.status(500).json({ error: "Internal Server Error" });
+        }
 
     }
     catch (err) {
