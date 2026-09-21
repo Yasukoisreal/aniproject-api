@@ -14,12 +14,7 @@ dotenv.config();
 
 const redisClient = redis.createClient(
     process.env.DEV_MODE === 'true' ? {} : {
-        username: `${process.env.REDIS_USERNAME}`,
-        password: `${process.env.REDIS_PASSWORD}`,
-        socket: {
-            host: `${process.env.REDIS_HOST}`,
-            port: process.env.REDIS_PORT
-        }
+        url: `rediss://${process.env.REDIS_USERNAME}:${process.env.REDIS_PASSWORD}@${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`
     });
 
 (async () => {
