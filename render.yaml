@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: aniproject-api
+    env: node
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: DEV_MODE
+        value: false
+      - key: REDIS_EXPIRATION
+        value: 300
